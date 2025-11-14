@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍌 VANABANANA - Options ATM Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🍌</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            padding: 12px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-image: url('https://i.imgur.com/your-image-url.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .header-left {
+            grid-column: 1 / 3;
+        }
+
+        .header-right {
+            grid-column: 3 / 4;
+            font-size: 8px;
+            background: rgba(26, 26, 26, 0.92);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 8px;
+            line-height: 1.3;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #ffd43b;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .status {
+            display: flex;
+            gap: 15px;
+            font-size: 10px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .connected {
+            background: #51cf66;
+        }
+
+        .disconnected {
+            background: #ff6b6b;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: rgba(26, 26, 26, 0.92);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 9px;
+        }
+
+        .card-header {
+            font-size: 11px;
+            font-weight: bold;
+            color: #ffd43b;
+            margin-bottom: 6px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 4px;
+        }
+
+        .expiry-date {
+            font-size: 8px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .data-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            color: #aaa;
+            font-size: 8px;
+        }
+
+        .value {
+            font-size: 9px;
+            font-weight: bold;
+            color: #fff;
+            text-align: right;
+        }
+
+        .section-separator {
+            border-top: 1px solid #333;
+            margin: 4px 0 2px 0;
+            padding-top: 3px;
+        }
+
+        .strike {
+            color: #69db7c;
+        }
+
+        .iv {
+            color: #ffd43b;
+        }
+
+        .straddle {
+            color: #ff8787;
+        }
+
+        .loading {
+            text-align: center;
+            color: #888;
+            padding: 40px;
+        }
+
+        .legend-item {
+            padding: 1px 0;
+            line-height: 1.3;
+        }
+
+        .delta-details {
+            font-size: 8px;
+            color: #fff;
+            margin-top: 2px;
+            line-height: 1.3;
+            font-weight: 500;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 10px;
+            color: #555;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #222;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>🍌 VANABANANA</h1>
+                <div class="subtitle">ATM Options Dashboard - Real-time Volatility & Straddle Pricing</div>
+                <div class="status">
+                    <span>Deribit: <span class="status-dot disconnected" id="wsStatus"></span></span>
+                    <span>BTC: $<span id="btcPrice">--</span></span>
+                    <span>ETH: $<span id="ethPrice">--</span></span>
+                    <span>SOL: $<span id="solPrice">--</span></span>
+                    <span>Updated: <span id="lastUpdate">--</span></span>
+                    <span id="refreshStatus" style="color: #888;"></span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div style="font-weight: bold; color: #ffd43b; margin-bottom: 5px;">📊 Risk Reversal (Call IV - Put IV)</div>
+                <div class="legend-item" style="color: #51cf66;">● BULLISH (>0): Calls > Puts</div>
+                <div class="legend-item" style="color: #69db7c;">● Neutral (0 to -5): Low premium</div>
+                <div class="legend-item" style="color: #ffd43b;">● Normal (-5 to -15): Typical</div>
+                <div class="legend-item" style="color: #ff8787;">● Elevated (-15 to -25): High demand</div>
+                <div class="legend-item" style="color: #ff6b6b;">● Extreme (<-25): Very high fear</div>
+            </div>
+        </div>
+
+        <div class="grid" id="optionsGrid">
+            <div class="loading">Loading options data...</div>
+        </div>
+
+        <div class="footer">
+            <div id="dateTime">--</div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        const state = {
+            prices: {
+                BTC: 0,
+                ETH: 0,
+                SOL: 0
+            },
+            currencies: {
+                BTC: {
+                    weekly: null,
+                    monthly: null,
+                    nextMonthly: null,
+                    quarterly: null
+                },
+                ETH: {
+                    weekly: null,
+                    monthly: null,
+                    nextMonthly: null,
+                    quarterly: null
+                },
+                SOL: {
+                    weekly: null,
+                    monthly: null,
+                    nextMonthly: null,
+                    quarterly: null
+                }
+            },
+            ws: null
+        };
+
+        // API configuration
+        const API_BASE = 'https://www.deribit.com/api/v2';
+        const WS_URL = 'wss://www.deribit.com/ws/api/v2';
+
+        // Initialize
+        async function init() {
+            console.log('Initializing VANABANANA...');
+
+            // Update date/time
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+
+            // Initial data fetch
+            await refreshAllData();
+
+            // Connect WebSocket for real-time updates
+            connectWebSocket();
+
+            // Auto-refresh all data every 60 seconds to recalculate delta strikes
+            setInterval(async () => {
+                console.log('Auto-refreshing options data...');
+                await refreshAllData();
+            }, 60000); // 60 seconds
+        }
+
+        // Refresh all options data
+        async function refreshAllData() {
+            const refreshStatus = document.getElementById('refreshStatus');
+            if (refreshStatus) refreshStatus.textContent = '🔄 Refreshing delta strikes...';
+
+            // Fetch prices for all currencies
+            await Promise.all([
+                fetchPrice('BTC'),
+                fetchPrice('ETH'),
+                fetchPrice('SOL')
+            ]);
+
+            // Fetch and categorize options for all currencies
+            await Promise.all([
+                fetchAndCategorizeOptions('BTC'),
+                fetchAndCategorizeOptions('ETH'),
+                fetchAndCategorizeOptions('SOL')
+            ]);
+
+            if (refreshStatus) {
+                refreshStatus.textContent = '✓ Auto-refresh: 60s';
+                setTimeout(() => {
+                    refreshStatus.textContent = '';
+                }, 3000);
+            }
+        }
+
+        // Fetch current price for a currency
+        async function fetchPrice(currency) {
+            try {
+                const response = await fetch(`${API_BASE}/public/get_index_price?index_name=${currency.toLowerCase()}_usd`);
+                const data = await response.json();
+                state.prices[currency] = data.result.index_price;
+
+                // Update UI prices
+                if (currency === 'BTC') {
+                    document.getElementById('btcPrice').textContent = state.prices.BTC.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                } else if (currency === 'ETH') {
+                    document.getElementById('ethPrice').textContent = state.prices.ETH.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                } else if (currency === 'SOL') {
+                    document.getElementById('solPrice').textContent = state.prices.SOL.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                }
+                console.log(`${currency} Price:`, state.prices[currency]);
+            } catch (error) {
+                console.error(`Error fetching ${currency} price:`, error);
+            }
+        }
+
+        // Fetch and categorize options
+        async function fetchAndCategorizeOptions(currency) {
+            try {
+                // SOL options on Deribit are USDC-settled
+                const apiCurrency = currency === 'SOL' ? 'USDC' : currency;
+                const response = await fetch(`${API_BASE}/public/get_instruments?currency=${apiCurrency}&kind=option&expired=false`);
+                const data = await response.json();
+                let instruments = data.result;
+
+                // Filter SOL options specifically for USDC currency
+                if (currency === 'SOL') {
+                    instruments = instruments.filter(inst => inst.instrument_name.startsWith('SOL'));
+                }
+
+                console.log(`Fetched ${instruments.length} ${currency} options`);
+
+                // Group by expiration
+                const expirationMap = new Map();
+                instruments.forEach(inst => {
+                    const expiry = inst.expiration_timestamp;
+                    if (!expirationMap.has(expiry)) {
+                        expirationMap.set(expiry, []);
+                    }
+                    expirationMap.get(expiry).push(inst);
+                });
+
+                // Sort expirations
+                const sortedExpiries = Array.from(expirationMap.keys()).sort((a, b) => a - b);
+
+                // Categorize by settlement_period field
+                const now = Date.now();
+
+                // Group expirations by settlement period
+                const weeklyExpiries = [];
+                const monthlyExpiries = [];
+                const quarterlyExpiries = [];
+
+                expirationMap.forEach((insts, expiry) => {
+                    const settlement = insts[0].settlement_period;
+                    if (settlement === 'week') weeklyExpiries.push(expiry);
+                    else if (settlement === 'month') monthlyExpiries.push(expiry);
+                    else if (settlement === 'quarter') quarterlyExpiries.push(expiry);
+                });
+
+                // Sort each category
+                weeklyExpiries.sort((a, b) => a - b);
+                monthlyExpiries.sort((a, b) => a - b);
+                quarterlyExpiries.sort((a, b) => a - b);
+
+                // Find nearest in each category
+                const weekly = weeklyExpiries.find(exp => exp > now);
+                const monthly = monthlyExpiries.find(exp => exp > now);
+                const nextMonthly = monthlyExpiries.find(exp => exp > (monthly || 0));
+                const quarterly = quarterlyExpiries.find(exp => exp > now);
+
+                // Find ATM strikes for each category
+                if (weekly) state.currencies[currency].weekly = await findATMOptions(expirationMap.get(weekly), weekly, `${currency} Weekly`, currency);
+                if (monthly) state.currencies[currency].monthly = await findATMOptions(expirationMap.get(monthly), monthly, `${currency} Monthly`, currency);
+                if (nextMonthly) state.currencies[currency].nextMonthly = await findATMOptions(expirationMap.get(nextMonthly), nextMonthly, `${currency} Next Monthly`, currency);
+                if (quarterly) state.currencies[currency].quarterly = await findATMOptions(expirationMap.get(quarterly), quarterly, `${currency} Quarterly`, currency);
+
+                // Render UI only after all currencies are loaded
+                if (Object.values(state.currencies).every(c => c.weekly || c.monthly)) {
+                    renderUI();
+                }
+
+            } catch (error) {
+                console.error('Error fetching options:', error);
+            }
+        }
+
+        // Find ATM options for a given expiration
+        async function findATMOptions(instruments, expiry, label, currency) {
+            const currentPrice = state.prices[currency];
+
+            // Find closest strike to current price
+            const strikes = [...new Set(instruments.map(i => i.strike))].sort((a, b) => a - b);
+            const atmStrike = strikes.reduce((prev, curr) =>
+                Math.abs(curr - currentPrice) < Math.abs(prev - currentPrice) ? curr : prev
+            );
+
+            // Find call and put at ATM strike
+            const call = instruments.find(i => i.strike === atmStrike && i.option_type === 'call');
+            const put = instruments.find(i => i.strike === atmStrike && i.option_type === 'put');
+
+            if (!call || !put) return null;
+
+            // Fetch ticker data for ATM options
+            const callTicker = await fetchTicker(call.instrument_name);
+            const putTicker = await fetchTicker(put.instrument_name);
+
+            // Find 25 delta and 15 delta options for skew calculation
+            const skews = await calculateSkews(instruments, currency);
+
+            return {
+                currency,
+                label,
+                expiry,
+                expiryDate: new Date(expiry).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                strike: atmStrike,
+                call: {
+                    name: call.instrument_name,
+                    price: callTicker?.mark_price || 0,
+                    iv: callTicker?.mark_iv || 0
+                },
+                put: {
+                    name: put.instrument_name,
+                    price: putTicker?.mark_price || 0,
+                    iv: putTicker?.mark_iv || 0
+                },
+                atmIV: callTicker?.mark_iv || 0,
+                straddlePrice: (callTicker?.mark_price || 0) + (putTicker?.mark_price || 0),
+                skew25: skews?.skew25 || null,
+                skew15: skews?.skew15 || null,
+                call25d: skews?.call25d || null,
+                put25d: skews?.put25d || null,
+                call15d: skews?.call15d || null,
+                put15d: skews?.put15d || null
+            };
+        }
+
+        // Helper to batch requests with delay
+        async function batchFetch(items, batchSize, delayMs) {
+            const results = [];
+            for (let i = 0; i < items.length; i += batchSize) {
+                const batch = items.slice(i, i + batchSize);
+                const batchResults = await Promise.all(
+                    batch.map(item => fetchTicker(item.instrument_name).then(ticker => ({ ...item, ticker })))
+                );
+                results.push(...batchResults);
+
+                // Delay between batches to avoid rate limiting
+                if (i + batchSize < items.length) {
+                    await new Promise(resolve => setTimeout(resolve, delayMs));
+                }
+            }
+            return results;
+        }
+
+        // Calculate delta skews
+        async function calculateSkews(instruments, currency) {
+            const currentPrice = state.prices[currency];
+            const calls = instruments.filter(i => i.option_type === 'call');
+            const puts = instruments.filter(i => i.option_type === 'put');
+
+            // Only fetch a subset of strikes around where 25Δ/15Δ should be
+            // For calls: strikes above current price, for puts: strikes below
+            const callsSubset = calls.filter(c =>
+                c.strike >= currentPrice * 1.05 && c.strike <= currentPrice * 1.30
+            ).slice(0, 15); // Limit to 15 strikes
+
+            const putsSubset = puts.filter(p =>
+                p.strike <= currentPrice * 0.95 && p.strike >= currentPrice * 0.70
+            ).slice(0, 15); // Limit to 15 strikes
+
+            console.log(`Fetching ${callsSubset.length} calls and ${putsSubset.length} puts (reduced from ${calls.length + puts.length} total)`);
+
+            // Fetch tickers with batching and delays
+            const tickeredOptions = await batchFetch([...callsSubset, ...putsSubset], 10, 300);
+
+            // Find 25 delta options (delta ≈ 0.25 for calls, ≈ -0.25 for puts)
+            const callsWithDelta = tickeredOptions.filter(o => o.option_type === 'call' && o.ticker?.greeks?.delta);
+            const putsWithDelta = tickeredOptions.filter(o => o.option_type === 'put' && o.ticker?.greeks?.delta);
+
+            // Log all call deltas for debugging
+            console.log(`${currency} Call deltas:`, callsWithDelta.map(c => ({
+                strike: c.strike,
+                delta: c.ticker.greeks.delta.toFixed(3)
+            })));
+
+            const call25d = callsWithDelta.reduce((prev, curr) =>
+                !prev || Math.abs(curr.ticker.greeks.delta - 0.25) < Math.abs(prev.ticker.greeks.delta - 0.25)
+                ? curr : prev
+            , null);
+
+            const put25d = putsWithDelta.reduce((prev, curr) =>
+                !prev || Math.abs(curr.ticker.greeks.delta + 0.25) < Math.abs(prev.ticker.greeks.delta + 0.25)
+                ? curr : prev
+            , null);
+
+            // Find 15 delta options
+            const call15d = tickeredOptions
+                .filter(o => o.option_type === 'call' && o.ticker?.greeks?.delta)
+                .reduce((prev, curr) =>
+                    !prev || Math.abs(curr.ticker.greeks.delta - 0.15) < Math.abs(prev.ticker.greeks.delta - 0.15)
+                    ? curr : prev
+                , null);
+
+            const put15d = tickeredOptions
+                .filter(o => o.option_type === 'put' && o.ticker?.greeks?.delta)
+                .reduce((prev, curr) =>
+                    !prev || Math.abs(curr.ticker.greeks.delta + 0.15) < Math.abs(prev.ticker.greeks.delta + 0.15)
+                    ? curr : prev
+                , null);
+
+            // Debug logging
+            console.log('25Δ Skew Debug:', {
+                call: call25d ? `${call25d.instrument_name} (Δ=${call25d.ticker.greeks.delta.toFixed(3)}, IV=${call25d.ticker.mark_iv.toFixed(2)}%)` : 'N/A',
+                put: put25d ? `${put25d.instrument_name} (Δ=${put25d.ticker.greeks.delta.toFixed(3)}, IV=${put25d.ticker.mark_iv.toFixed(2)}%)` : 'N/A'
+            });
+
+            // Calculate Risk Reversal (call IV - put IV)
+            const skew25 = (put25d?.ticker?.mark_iv && call25d?.ticker?.mark_iv)
+                ? call25d.ticker.mark_iv - put25d.ticker.mark_iv
+                : null;
+
+            const skew15 = (put15d?.ticker?.mark_iv && call15d?.ticker?.mark_iv)
+                ? call15d.ticker.mark_iv - put15d.ticker.mark_iv
+                : null;
+
+            return {
+                skew25,
+                skew15,
+                call25d: call25d ? {
+                    strike: call25d.strike,
+                    iv: call25d.ticker.mark_iv,
+                    delta: call25d.ticker.greeks.delta
+                } : null,
+                put25d: put25d ? {
+                    strike: put25d.strike,
+                    iv: put25d.ticker.mark_iv,
+                    delta: put25d.ticker.greeks.delta
+                } : null,
+                call15d: call15d ? {
+                    strike: call15d.strike,
+                    iv: call15d.ticker.mark_iv,
+                    delta: call15d.ticker.greeks.delta
+                } : null,
+                put15d: put15d ? {
+                    strike: put15d.strike,
+                    iv: put15d.ticker.mark_iv,
+                    delta: put15d.ticker.greeks.delta
+                } : null
+            };
+        }
+
+        // Get skew context (Risk Reversal ranges)
+        function getSkewContext(skew) {
+            if (skew === null || skew === undefined) return { label: 'N/A', color: '#888' };
+
+            // Risk Reversal: Call IV - Put IV
+            // Negative RR = puts more expensive (typical protective demand)
+            // Positive RR = calls more expensive (bullish/unusual)
+            if (skew > 0) return { label: 'BULLISH', color: '#51cf66' }; // Calls > Puts (unusual)
+            if (skew > -5) return { label: 'Neutral', color: '#69db7c' }; // Very low put premium
+            if (skew > -15) return { label: 'Normal', color: '#ffd43b' }; // Typical put premium
+            if (skew > -25) return { label: 'Elevated', color: '#ff8787' }; // High put premium
+            return { label: 'Extreme', color: '#ff6b6b' }; // Very high put premium
+        }
+
+        // Fetch ticker data
+        async function fetchTicker(instrumentName) {
+            try {
+                const response = await fetch(`${API_BASE}/public/ticker?instrument_name=${instrumentName}`);
+                const data = await response.json();
+                return data.result;
+            } catch (error) {
+                console.error(`Error fetching ticker for ${instrumentName}:`, error);
+                return null;
+            }
+        }
+
+        // Format straddle range
+        function formatStraddleRange(straddleUSD, currentPrice) {
+            const lower = currentPrice - straddleUSD;
+            const upper = currentPrice + straddleUSD;
+
+            // Smart formatting based on price levels
+            if (currentPrice >= 10000) {
+                // BTC range: show as $XXk - $XXk with 1 decimal
+                return `$${(lower / 1000).toFixed(1)}k - $${(upper / 1000).toFixed(1)}k`;
+            } else if (currentPrice >= 1000) {
+                // ETH range: show full numbers with commas
+                return `$${Math.round(lower).toLocaleString()} - $${Math.round(upper).toLocaleString()}`;
+            } else {
+                // SOL range: show full numbers with 2 decimals
+                return `$${lower.toFixed(2)} - $${upper.toFixed(2)}`;
+            }
+        }
+
+        // Render UI (3x3 matrix: BTC/ETH/SOL rows, Weekly/Monthly/Next columns)
+        function renderUI() {
+            const grid = document.getElementById('optionsGrid');
+            grid.innerHTML = '';
+
+            const currencies = ['BTC', 'ETH', 'SOL'];
+            const categories = ['weekly', 'monthly', 'nextMonthly']; // Skip quarterly for 3x3 grid
+
+            currencies.forEach(currency => {
+                categories.forEach(cat => {
+                    const data = state.currencies[currency][cat];
+                    if (!data) {
+                        // Add placeholder if data not available
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'card';
+                        placeholder.innerHTML = '<div class="loading">Loading...</div>';
+                        grid.appendChild(placeholder);
+                        return;
+                    }
+
+                    const currentPrice = state.prices[currency];
+
+                const card = document.createElement('div');
+                card.className = 'card';
+
+                // SOL options are USDC-settled, so prices are already in USD
+                const isUsdcSettled = currency === 'SOL';
+                const callPriceDisplay = isUsdcSettled
+                    ? `$${data.call.price.toFixed(2)}`
+                    : `${data.call.price.toFixed(4)} ${currency} ($${(data.call.price * currentPrice).toLocaleString('en-US', {maximumFractionDigits: 0})})`;
+                const putPriceDisplay = isUsdcSettled
+                    ? `$${data.put.price.toFixed(2)}`
+                    : `${data.put.price.toFixed(4)} ${currency} ($${(data.put.price * currentPrice).toLocaleString('en-US', {maximumFractionDigits: 0})})`;
+                const straddlePriceDisplay = isUsdcSettled
+                    ? `$${data.straddlePrice.toFixed(2)}`
+                    : `${data.straddlePrice.toFixed(4)} ${currency} ($${(data.straddlePrice * currentPrice).toLocaleString('en-US', {maximumFractionDigits: 0})})`;
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        ${data.label}
+                        <div class="expiry-date">${data.expiryDate}</div>
+                    </div>
+                    <div class="data-row">
+                        <span class="label">ATM Strike</span>
+                        <span class="value strike">$${data.strike.toLocaleString()}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="label">ATM IV</span>
+                        <span class="value iv">${data.atmIV.toFixed(2)}%</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="label">Expected Daily Move</span>
+                        <span class="value">${(() => {
+                            const dailyMove = (currentPrice * (data.atmIV / 100)) / Math.sqrt(365);
+                            if (currentPrice >= 10000) {
+                                return `$${(dailyMove / 1000).toFixed(2)}k (${((dailyMove / currentPrice) * 100).toFixed(2)}%)`;
+                            } else if (currentPrice >= 1000) {
+                                return `$${Math.round(dailyMove).toLocaleString()} (${((dailyMove / currentPrice) * 100).toFixed(2)}%)`;
+                            } else {
+                                return `$${dailyMove.toFixed(2)} (${((dailyMove / currentPrice) * 100).toFixed(2)}%)`;
+                            }
+                        })()}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="label">Call Price</span>
+                        <span class="value">${callPriceDisplay}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="label">Put Price</span>
+                        <span class="value">${putPriceDisplay}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="label">Straddle Price</span>
+                        <span class="value straddle">${straddlePriceDisplay}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="label">Straddle Range</span>
+                        <span class="value">${isUsdcSettled ? formatStraddleRange(data.straddlePrice, currentPrice) : formatStraddleRange(data.straddlePrice * currentPrice, currentPrice)}</span>
+                    </div>
+                    <div class="section-separator"></div>
+                    <div class="data-row">
+                        <span class="label">25Δ Skew (RR)</span>
+                        <span class="value">${data.skew25 !== null ? data.skew25.toFixed(2) + '%' : '--'} <span style="color: ${getSkewContext(data.skew25).color}; font-size: 10px;">[${getSkewContext(data.skew25).label}]</span></span>
+                    </div>
+                    ${data.call25d ? `<div class="delta-details">25Δ Call: $${data.call25d.strike.toLocaleString()} @ ${data.call25d.iv.toFixed(2)}% IV</div>` : ''}
+                    ${data.put25d ? `<div class="delta-details">25Δ Put: $${data.put25d.strike.toLocaleString()} @ ${data.put25d.iv.toFixed(2)}% IV</div>` : ''}
+                    <div class="section-separator"></div>
+                    <div class="data-row">
+                        <span class="label">15Δ Skew (RR)</span>
+                        <span class="value">${data.skew15 !== null ? data.skew15.toFixed(2) + '%' : '--'} <span style="color: ${getSkewContext(data.skew15).color}; font-size: 10px;">[${getSkewContext(data.skew15).label}]</span></span>
+                    </div>
+                    ${data.call15d ? `<div class="delta-details">15Δ Call: $${data.call15d.strike.toLocaleString()} @ ${data.call15d.iv.toFixed(2)}% IV</div>` : ''}
+                    ${data.put15d ? `<div class="delta-details">15Δ Put: $${data.put15d.strike.toLocaleString()} @ ${data.put15d.iv.toFixed(2)}% IV</div>` : ''}
+                `;
+                    grid.appendChild(card);
+                });
+            });
+
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        }
+
+        // Connect WebSocket
+        function connectWebSocket() {
+            state.ws = new WebSocket(WS_URL);
+
+            state.ws.onopen = () => {
+                console.log('WebSocket connected');
+                document.getElementById('wsStatus').className = 'status-dot connected';
+
+                // Subscribe to price indices
+                state.ws.send(JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'public/subscribe',
+                    params: {
+                        channels: [
+                            'deribit_price_index.btc_usd',
+                            'deribit_price_index.eth_usd',
+                            'deribit_price_index.sol_usd'
+                        ]
+                    },
+                    id: 1
+                }));
+
+                // Subscribe to all ATM option tickers
+                const channels = [];
+                Object.keys(state.currencies).forEach(currency => {
+                    Object.values(state.currencies[currency]).forEach(exp => {
+                        if (exp) {
+                            channels.push(`ticker.${exp.call.name}.100ms`);
+                            channels.push(`ticker.${exp.put.name}.100ms`);
+                        }
+                    });
+                });
+
+                if (channels.length > 0) {
+                    state.ws.send(JSON.stringify({
+                        jsonrpc: '2.0',
+                        method: 'public/subscribe',
+                        params: { channels },
+                        id: 2
+                    }));
+                }
+            };
+
+            state.ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.params && data.params.channel) {
+                    handleWebSocketUpdate(data.params);
+                }
+            };
+
+            state.ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                document.getElementById('wsStatus').className = 'status-dot disconnected';
+            };
+
+            state.ws.onclose = () => {
+                console.log('WebSocket closed, reconnecting in 5s...');
+                document.getElementById('wsStatus').className = 'status-dot disconnected';
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+
+        // Handle WebSocket updates
+        function handleWebSocketUpdate(params) {
+            const channel = params.channel;
+            const data = params.data;
+
+            // Price index updates
+            if (channel === 'deribit_price_index.btc_usd') {
+                state.prices.BTC = data.price;
+                document.getElementById('btcPrice').textContent = state.prices.BTC.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+                return;
+            }
+            if (channel === 'deribit_price_index.eth_usd') {
+                state.prices.ETH = data.price;
+                document.getElementById('ethPrice').textContent = state.prices.ETH.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+                return;
+            }
+            if (channel === 'deribit_price_index.sol_usd') {
+                state.prices.SOL = data.price;
+                document.getElementById('solPrice').textContent = state.prices.SOL.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+                return;
+            }
+
+            // Ticker update
+            if (channel.startsWith('ticker.')) {
+                const instrumentName = data.instrument_name;
+
+                // Update the corresponding option data
+                Object.keys(state.currencies).forEach(currency => {
+                    Object.keys(state.currencies[currency]).forEach(cat => {
+                        const exp = state.currencies[currency][cat];
+                        if (!exp) return;
+
+                        if (exp.call.name === instrumentName) {
+                            exp.call.price = data.mark_price;
+                            exp.call.iv = data.mark_iv;
+                            exp.atmIV = data.mark_iv;
+                            exp.straddlePrice = exp.call.price + exp.put.price;
+                        } else if (exp.put.name === instrumentName) {
+                            exp.put.price = data.mark_price;
+                            exp.put.iv = data.mark_iv;
+                            exp.straddlePrice = exp.call.price + exp.put.price;
+                        }
+                    });
+                });
+
+                renderUI();
+            }
+        }
+
+        // Update date/time
+        function updateDateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+            const timeStr = now.toLocaleTimeString('en-GB');
+            document.getElementById('dateTime').textContent = `${dateStr} ${timeStr}`;
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>

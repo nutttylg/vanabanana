@@ -386,21 +386,21 @@
                         <div style="flex: 1; min-width: 200px;">
                             <div style="color: #aaa; margin-bottom: 3px; font-style: italic;">Weekly Expiries:</div>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                <span style="color: #ff4444;">😱 <-15%</span>
-                                <span style="color: #ff9966;">🐻 -15~-5%</span>
-                                <span style="color: #69db7c;">😎 -5~+5%</span>
-                                <span style="color: #ffd43b;">🐂 +5~+10%</span>
-                                <span style="color: #ff6b6b;">🚀 >+10%</span>
+                                <span style="color: #ff4444;">😱 PANICANSSS</span>
+                                <span style="color: #ff9966;">🐻 SMOLTING BERA</span>
+                                <span style="color: #69db7c;">😎 CHILL</span>
+                                <span style="color: #ffd43b;">🐂 PUNPY</span>
+                                <span style="color: #ff6b6b;">🚀 EUPHORIA</span>
                             </div>
                         </div>
                         <div style="flex: 1; min-width: 200px;">
                             <div style="color: #aaa; margin-bottom: 3px; font-style: italic;">Monthly & Next Month:</div>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                <span style="color: #ff4444;">😱 <-12%</span>
-                                <span style="color: #ff9966;">🐻 -12~-5%</span>
-                                <span style="color: #69db7c;">😎 -5~+3%</span>
-                                <span style="color: #ffd43b;">🐂 +3~+12%</span>
-                                <span style="color: #ff6b6b;">🚀 >+12%</span>
+                                <span style="color: #ff4444;">😱 PANICANSSS</span>
+                                <span style="color: #ff9966;">🐻 SMOLTING BERA</span>
+                                <span style="color: #69db7c;">😎 CHILL</span>
+                                <span style="color: #ffd43b;">🐂 PUNPY</span>
+                                <span style="color: #ff6b6b;">🚀 EUPHORIA</span>
                             </div>
                         </div>
                     </div>
@@ -419,7 +419,11 @@
         <div class="trade-tape">
             <div class="tape-header">
                 📊 LIVE OPTIONS TAPE
-                <div style="font-size: 8px; color: #888; margin-top: 2px;">Block Trades & High Value Options (>$100k)</div>
+                <div style="font-size: 8px; color: #888; margin-top: 2px;">
+                    Block Trades & High Value Options (>$100k)
+                    <span id="tapeRefreshIndicator" style="margin-left: 8px; color: #51cf66;">●</span>
+                    <span id="tapeLastUpdate" style="margin-left: 4px;"></span>
+                </div>
             </div>
             <div class="tape-content" id="tapeContent">
                 <div style="text-align: center; color: #666; font-size: 9px; padding: 20px;">
@@ -1005,7 +1009,7 @@
 
             // Weekly thresholds
             if (isWeekly) {
-                if (skew < -15) return { label: 'EXTREME FEAR', color: '#ff4444' };
+                if (skew < -15) return { label: 'PANICANSSS', color: '#ff4444' };
                 if (skew < -5) return { label: 'SMOLTING BERA', color: '#ff9966' };
                 if (skew < 5) return { label: 'CHILL', color: '#69db7c' };
                 if (skew < 10) return { label: 'PUNPY', color: '#ffd43b' };
@@ -1013,7 +1017,7 @@
             }
 
             // Monthly & Next Month thresholds
-            if (skew < -12) return { label: 'EXTREME FEAR', color: '#ff4444' };
+            if (skew < -12) return { label: 'PANICANSSS', color: '#ff4444' };
             if (skew < -5) return { label: 'SMOLTING BERA', color: '#ff9966' };
             if (skew < 3) return { label: 'CHILL', color: '#69db7c' };
             if (skew < 12) return { label: 'PUNPY', color: '#ffd43b' };
@@ -1470,6 +1474,12 @@
         // Poll for block trades using REST API
         async function pollBlockTrades() {
             try {
+                // Flash the indicator
+                const indicator = document.getElementById('tapeRefreshIndicator');
+                if (indicator) {
+                    indicator.style.color = '#ffd43b'; // Yellow while fetching
+                }
+
                 // Fetch recent trades for BTC, ETH, and SOL options
                 const currencies = ['BTC', 'ETH', 'SOL'];
 
@@ -1478,7 +1488,10 @@
                     const data = await response.json();
 
                     if (data.result && data.result.trades) {
-                        data.result.trades.forEach(trade => {
+                        // Sort trades by timestamp descending (newest first) before processing
+                        const sortedTrades = data.result.trades.sort((a, b) => b.timestamp - a.timestamp);
+
+                        sortedTrades.forEach(trade => {
                             // Only process if it's a block trade or high value
                             if (trade.block_trade_id || trade.block_rfq_id || trade.amount > 100000) {
                                 // Check if we already have this trade (avoid duplicates)
@@ -1494,8 +1507,22 @@
                         });
                     }
                 }
+
+                // Update last refresh time and indicator
+                if (indicator) {
+                    indicator.style.color = '#51cf66'; // Green when done
+                }
+                const lastUpdate = document.getElementById('tapeLastUpdate');
+                if (lastUpdate) {
+                    const now = new Date();
+                    lastUpdate.textContent = `Updated ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+                }
             } catch (error) {
                 console.error('Error polling block trades:', error);
+                const indicator = document.getElementById('tapeRefreshIndicator');
+                if (indicator) {
+                    indicator.style.color = '#ff4444'; // Red on error
+                }
             }
         }
 

@@ -1105,33 +1105,57 @@
                         <span class="value iv">${data.atmIV.toFixed(2)}%</span>
                     </div>
                     <div class="data-row">
-                        <span class="label">Expected Daily Move</span>
-                        <span class="value">${(() => {
-                            const dailyMove = (currentPrice * (data.atmIV / 100)) / Math.sqrt(365);
-                            if (currentPrice >= 10000) {
-                                return `$${(dailyMove / 1000).toFixed(2)}k (${((dailyMove / currentPrice) * 100).toFixed(2)}%)`;
-                            } else if (currentPrice >= 1000) {
-                                return `$${Math.round(dailyMove).toLocaleString()} (${((dailyMove / currentPrice) * 100).toFixed(2)}%)`;
-                            } else {
-                                return `$${dailyMove.toFixed(2)} (${((dailyMove / currentPrice) * 100).toFixed(2)}%)`;
-                            }
-                        })()}</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="label">Call Price</span>
-                        <span class="value">${callPriceDisplay}</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="label">Put Price</span>
-                        <span class="value">${putPriceDisplay}</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="label">Straddle Price</span>
-                        <span class="value straddle">${straddlePriceDisplay}</span>
+                        <span class="label">Call / Put Price</span>
+                        <span class="value">${callPriceDisplay} / ${putPriceDisplay}</span>
                     </div>
                     <div class="data-row">
                         <span class="label">Straddle Range</span>
                         <span class="value">${isUsdcSettled ? formatStraddleRange(data.straddlePrice, currentPrice) : formatStraddleRange(data.straddlePrice * currentPrice, currentPrice)}</span>
+                    </div>
+                    <div class="section-separator"></div>
+                    <div class="data-row">
+                        <span class="label">Implied Daily Movement</span>
+                        <span class="value">${(() => {
+                            const dailySigma = (currentPrice * (data.atmIV / 100)) / Math.sqrt(365);
+                            const pct = ((dailySigma / currentPrice) * 100).toFixed(2);
+                            if (currentPrice >= 10000) {
+                                return `±$${(dailySigma / 1000).toFixed(2)}k (${pct}%)`;
+                            } else if (currentPrice >= 1000) {
+                                return `±$${Math.round(dailySigma).toLocaleString()} (${pct}%)`;
+                            } else {
+                                return `±$${dailySigma.toFixed(2)} (${pct}%)`;
+                            }
+                        })()}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="label">68% Daily Range</span>
+                        <span class="value">${(() => {
+                            const dailySigma = (currentPrice * (data.atmIV / 100)) / Math.sqrt(365);
+                            const lower = currentPrice - dailySigma;
+                            const upper = currentPrice + dailySigma;
+                            if (currentPrice >= 10000) {
+                                return `$${(lower / 1000).toFixed(2)}k - $${(upper / 1000).toFixed(2)}k`;
+                            } else if (currentPrice >= 1000) {
+                                return `$${Math.round(lower).toLocaleString()} - $${Math.round(upper).toLocaleString()}`;
+                            } else {
+                                return `$${lower.toFixed(2)} - $${upper.toFixed(2)}`;
+                            }
+                        })()}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="label">95% Daily Range</span>
+                        <span class="value">${(() => {
+                            const dailySigma = (currentPrice * (data.atmIV / 100)) / Math.sqrt(365);
+                            const lower = currentPrice - (2 * dailySigma);
+                            const upper = currentPrice + (2 * dailySigma);
+                            if (currentPrice >= 10000) {
+                                return `$${(lower / 1000).toFixed(2)}k - $${(upper / 1000).toFixed(2)}k`;
+                            } else if (currentPrice >= 1000) {
+                                return `$${Math.round(lower).toLocaleString()} - $${Math.round(upper).toLocaleString()}`;
+                            } else {
+                                return `$${lower.toFixed(2)} - $${upper.toFixed(2)}`;
+                            }
+                        })()}</span>
                     </div>
                     <div class="section-separator"></div>
                     <div class="data-row">
